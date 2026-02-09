@@ -1,0 +1,57 @@
+from sqlalchemy.orm import Session
+from models import User, Reward, Referral, Withdrawal
+from passlib.context import CryptContext
+from datetime import datetime
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def get_user_by_email(db: Session, email: str):
+    return db.query(User).filter(User.email == email).first()
+
+def create_user(db: Session, username: str, email: str, password: str):
+    hashed = pwd_context.hash(password)
+    new_user = User(username=username, email=email, password=hashed)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+def pay_membership(db: Session, user_id: int):
+    user = db.query(User).filter(User.id==user_id).first()
+    user.membership_active = True
+    user.membership_fee_paid = 500
+    db.commit()
+    return user
+
+def add_reward(db: Session, user_id: int, amount: float):
+    reward = db.query(Reward).filter(Reward.user_id==user_id).first()
+    if reward:
+        reward.credits += amount
+        reward.last_updated = datetime.utcnow()
+    else:
+        reward = Reward(user_id=user_id, credits=amount)
+        db.add(reward)
+    db.commit()
+    db.refresh(reward)
+    return reward
+
+def request_withdrawal(db: Session, user_id: int, amount: float):
+    wd = Withdrawal(user_id=user_id, amount=amount)
+    db.add(wd)
+    db.commit()
+    db.refresh(wd)
+    return wd
+
+def approve_withdrawal(db: Session, withdrawal_id: int):
+    wd = db.query(Withdrawal).filter(Withdrawal.id==withdrawal_id).first()
+    wd.status = "APPROVED"
+    db.commit()
+    db.refresh(wd)
+    return wd
+
+def reject_withdrawal(db: Session, withdrawal_id: int):
+    wd = db.query(Withdrawal).filter(Withdrawal.id==withdrawal_id).first()
+    wd.status = "REJECTED"
+    db.commit()
+    db.refresh(wd)
+    return wd
