@@ -1,6 +1,10 @@
+# schemas.py
 from pydantic import BaseModel
 from datetime import datetime
 
+# -------------------------
+# User schemas
+# -------------------------
 class UserCreate(BaseModel):
     username: str
     email: str
@@ -12,8 +16,11 @@ class UserOut(BaseModel):
     membership_active: bool
 
     class Config:
-        orm_mode = True
+        orm_mode = True  # Required for SQLAlchemy model conversion
 
+# -------------------------
+# Reward schemas
+# -------------------------
 class RewardOut(BaseModel):
     credits: float
     last_updated: datetime
@@ -21,6 +28,9 @@ class RewardOut(BaseModel):
     class Config:
         orm_mode = True
 
+# -------------------------
+# Withdrawal schemas
+# -------------------------
 class WithdrawalRequest(BaseModel):
     amount: float
 
